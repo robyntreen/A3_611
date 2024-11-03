@@ -53,10 +53,18 @@ public class AssignmentManager611 {
         System.out.println("Total points: " + totalPoints);
     }
 
+    // Method to get all players
+    public List<Document> getPlayers() {
+        return playerCollection.find().into(new ArrayList<>());
+    }
+
+    // Method to get all teams
+    public List<Document> getTeams() {
+        return teamCollection.find().into(new ArrayList<>());
+    }
+
     // Method to get assigned data for UI
     public List<Document> getTeamsWithPlayers() {
         return teamCollection.find().into(new ArrayList<>());
     }
 }
-
-

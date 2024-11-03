@@ -1,5 +1,3 @@
-// PlayerTeamUI.java
-
 import com.mongodb.client.MongoDatabase;
 import org.bson.Document;
 
@@ -14,7 +12,7 @@ public class UIManager611 extends JFrame {
     public UIManager611(AssignmentManager611 assignmentManager) {
         this.assignmentManager = assignmentManager;
         initializeUI();
-        displayAssignments();
+        displayInitialState();  // Display initial state of players and teams
     }
 
     private void initializeUI() {
@@ -27,20 +25,62 @@ public class UIManager611 extends JFrame {
         displayArea.setEditable(false);
         add(new JScrollPane(displayArea), BorderLayout.CENTER);
 
+        JPanel buttonPanel = new JPanel();
+        JButton displayInitialStateButton = new JButton("Show Initial State");
+        displayInitialStateButton.addActionListener(e -> displayInitialState());
+
+        JButton displayAssignmentsButton = new JButton("Show Assignments");
+        displayAssignmentsButton.addActionListener(e -> displayAssignments());
+
         JButton refreshButton = new JButton("Refresh Assignments");
-        refreshButton.addActionListener(e -> displayAssignments());
-        add(refreshButton, BorderLayout.SOUTH);
+        refreshButton.addActionListener(e -> {
+            assignmentManager.assignPlayers();  // Perform the assignment
+            displayAssignments();  // Show updated assignment
+        });
+
+        buttonPanel.add(displayInitialStateButton);
+        buttonPanel.add(displayAssignmentsButton);
+        buttonPanel.add(refreshButton);
+        add(buttonPanel, BorderLayout.SOUTH);
+    }
+
+    private void displayInitialState() {
+        displayArea.setText("");  // Clear existing text
+
+        List<Document> players = assignmentManager.getPlayers();
+        List<Document> teams = assignmentManager.getTeams();
+
+        StringBuilder sb = new StringBuilder();
+        sb.append("Initial State of Players and Teams:\n\n");
+
+        sb.append("Teams:\n");
+        for (Document team : teams) {
+            sb.append("Team: ").append(team.getString("name")).append("\n");
+            sb.append("Manager: ").append(team.getString("managerFirstName"))
+                    .append(" ").append(team.getString("managerLastName")).append("\n");
+            sb.append("Players Assigned: None\n\n");  // No players assigned initially
+        }
+
+        sb.append("Players:\n");
+        for (Document player : players) {
+            sb.append("Player: ").append(player.getString("firstName"))
+                    .append(" ").append(player.getString("lastName")).append("\n");
+            sb.append("Positions: ").append(player.getList("positions", String.class)).append("\n");
+            sb.append("Team Preferences: ").append(player.getList("teamPreferences", String.class)).append("\n\n");
+        }
+
+        displayArea.setText(sb.toString());
     }
 
     private void displayAssignments() {
         displayArea.setText("");  // Clear existing text
-        assignmentManager.assignPlayers();  // Perform assignment
 
         List<Document> teams = assignmentManager.getTeamsWithPlayers();
 
         StringBuilder sb = new StringBuilder();
-        int totalPoints = 0;
+        sb.append("Assigned Teams and Players:\n\n");
 
+        int totalPoints = 0;
         for (Document team : teams) {
             sb.append("Team: ").append(team.getString("name")).append("\n");
             sb.append("Manager: ").append(team.getString("managerFirstName"))
@@ -54,7 +94,10 @@ public class UIManager611 extends JFrame {
                 List<String> preferences = player.getList("teamPreferences", String.class);
                 int points = calculatePoints(team.getString("name"), preferences);
 
-                sb.append("  - Player: ").append(playerName).append(" | Points: ").append(points).append("\n");
+                sb.append("  - Player: ").append(playerName)
+                        .append(" | Points: ").append(points).append("\n");
+                sb.append("    Preferences: ").append(preferences).append("\n");
+
                 teamPoints += points;
             }
             sb.append("Team Points: ").append(teamPoints).append("\n\n");
